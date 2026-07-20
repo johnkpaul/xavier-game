@@ -15,12 +15,6 @@ const OUT_DIR := "res://generated_assets/"
 ## without redrawing anything by hand.
 const SCALE := 4
 
-const HAIR_BLACK := Color8(0x18, 0x14, 0x12)
-const SKIN := Color8(0xC8, 0x8E, 0x5E)
-const SKIN_SHADE := Color8(0xA8, 0x72, 0x48)
-const SHIRT_TEAL := Color8(0x2E, 0xC4, 0xB6)
-const SHIRT_LIGHT := Color8(0x5C, 0xDE, 0xD2)
-const SHORTS_NAVY := Color8(0x2A, 0x3A, 0x5C)
 const CLOUD_WHITE := Color8(0xF5, 0xF5, 0xF5)
 const VOID_BLACK := Color8(0x1A, 0x1A, 0x1A)
 const STAR_YELLOW := Color8(0xFF, 0xD5, 0x4F)
@@ -52,10 +46,9 @@ func _initialize() -> void:
 static func run_all() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 
-	_save(_make_xavier(0), "xavier_idle")
-	_save(_make_xavier(1), "xavier_reach")
-	_save(_make_xavier(2), "xavier_bonk")
-	_save(_make_xavier(3), "xavier_cheer")
+	# Xavier himself is no longer procedural - see res://imported_assets/
+	# for his real Sprixen-generated sprite (a deliberate, documented
+	# exception to "everything is code-generated"; see README).
 
 	# A 4-frame closing flipbook (1.0 = fully open ... 0.0 = almost shut),
 	# swapped by game.gd as risk rises, plus the separate full-bite "snap"
@@ -205,74 +198,6 @@ static func _draw_line(img: Image, x0: float, y0: float, x1: float, y1: float, t
 					var iy := int(py) + oy
 					if ix >= 0 and iy >= 0 and ix < img.get_width() and iy < img.get_height():
 						img.set_pixel(ix, iy, color)
-
-
-# ---------------------------------------------------------------------------
-# Xavier (40x48 logical). mode: 0=idle, 1=reach, 2=bonk, 3=cheer
-# ---------------------------------------------------------------------------
-
-static func _make_xavier(mode: int) -> Image:
-	var img := _new_image(40, 48)
-	var tilt := -2 if mode == 2 else 0
-
-	# Shorts + feet (drawn first, body/head layer on top).
-	_fill_rect(img, 13 + tilt, 40, 14, 6, SHORTS_NAVY)
-	_fill_rect(img, 12 + tilt, 45, 6, 3, VOID_BLACK)
-	_fill_rect(img, 22 + tilt, 45, 6, 3, VOID_BLACK)
-
-	# Shirt.
-	_fill_rect(img, 12 + tilt, 24, 16, 17, SHIRT_TEAL)
-	_fill_rect(img, 12 + tilt, 24, 16, 3, SHIRT_LIGHT)
-
-	# Arms, pose-dependent.
-	match mode:
-		1:
-			# Reach: right arm stretched toward the trap, left arm at side.
-			_fill_rect(img, 8 + tilt, 27, 4, 11, SKIN)
-			_fill_rect(img, 27 + tilt, 22, 15, 5, SKIN)
-		2:
-			# Bonk: both arms flung up in surprise.
-			_fill_rect(img, 3 + tilt, 18, 9, 5, SKIN)
-			_fill_rect(img, 28 + tilt, 18, 9, 5, SKIN)
-		3:
-			# Cheer: both arms up in a V, triumphant.
-			_fill_rect(img, 6 + tilt, 14, 5, 13, SKIN)
-			_fill_rect(img, 29 + tilt, 14, 5, 13, SKIN)
-		_:
-			_fill_rect(img, 8 + tilt, 26, 4, 12, SKIN)
-			_fill_rect(img, 28 + tilt, 26, 4, 12, SKIN)
-
-	# Head.
-	_fill_circle(img, 20 + tilt, 15, 9, SKIN)
-	# Wavy black hair: a rounded mass on top plus a few bump "waves".
-	_fill_circle(img, 20 + tilt, 10, 10, HAIR_BLACK)
-	_fill_circle(img, 20 + tilt, 16, 8, SKIN)
-	_fill_circle(img, 10 + tilt, 16, 3, HAIR_BLACK)
-	_fill_circle(img, 30 + tilt, 16, 3, HAIR_BLACK)
-	_fill_circle(img, 13 + tilt, 20, 2.5, HAIR_BLACK)
-	_fill_circle(img, 27 + tilt, 20, 2.5, HAIR_BLACK)
-
-	# Face.
-	if mode == 2:
-		# Dizzy X eyes + small stars orbiting the head.
-		_draw_line(img, 15 + tilt, 14, 18 + tilt, 17, 0.8, VOID_BLACK)
-		_draw_line(img, 18 + tilt, 14, 15 + tilt, 17, 0.8, VOID_BLACK)
-		_draw_line(img, 22 + tilt, 14, 25 + tilt, 17, 0.8, VOID_BLACK)
-		_draw_line(img, 25 + tilt, 14, 22 + tilt, 17, 0.8, VOID_BLACK)
-		_draw_line(img, 16, 19, 24, 19, 0.8, SKIN_SHADE)
-		_fill_diamond(img, 8, 4, 5, 5, STAR_YELLOW)
-		_fill_diamond(img, 33, 6, 4, 4, STAR_YELLOW)
-		_fill_diamond(img, 6, 12, 3.5, 3.5, STAR_YELLOW)
-	else:
-		_fill_rect(img, 16 + tilt, 14, 2, 2, VOID_BLACK)
-		_fill_rect(img, 23 + tilt, 14, 2, 2, VOID_BLACK)
-		if mode == 3:
-			_draw_line(img, 15 + tilt, 19, 20 + tilt, 21, 1.0, VOID_BLACK)
-			_draw_line(img, 20 + tilt, 21, 25 + tilt, 19, 1.0, VOID_BLACK)
-		else:
-			_draw_line(img, 16 + tilt, 19, 24 + tilt, 19, 0.8, SKIN_SHADE)
-
-	return img
 
 
 # ---------------------------------------------------------------------------

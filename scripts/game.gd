@@ -42,10 +42,13 @@ const TRAP_MOUTH_FRAMES := [
 	preload("res://generated_assets/trap_mouth_stage3.png"),
 ]
 const TEX_TRAP_SNAP := preload("res://generated_assets/trap_mouth_snap.png")
-const TEX_XAVIER_IDLE := preload("res://generated_assets/xavier_idle.png")
-const TEX_XAVIER_BRACE := preload("res://generated_assets/xavier_reach.png")
-const TEX_XAVIER_BONK := preload("res://generated_assets/xavier_bonk.png")
-const TEX_XAVIER_CHEER := preload("res://generated_assets/xavier_cheer.png")
+
+## Xavier has one real sprite (see res://imported_assets/) rather than a
+## separate baked image per pose. Bonk/cheer are conveyed with tween-driven
+## motion and color instead - a knockback + red flash, or a hop + gold flash.
+const TEX_XAVIER := preload("res://imported_assets/xavier_sprite.png")
+const BONK_FLASH := Color8(0xFF, 0x6B, 0x6B)
+const CHEER_FLASH := Color8(0xFF, 0xE0, 0x7A)
 
 @onready var trap_sprite: Sprite2D = $Trap
 @onready var xavier_sprite: Sprite2D = $Xavier
@@ -64,12 +67,16 @@ var _busy := false
 var _is_tutorial_round := false
 var _rng := RandomNumberGenerator.new()
 var _trap_home_pos: Vector2
+var _xavier_home_pos: Vector2
+var _xavier_home_scale: Vector2
 var _hint_arrow_tween: Tween
 
 
 func _ready() -> void:
 	_rng.randomize()
 	_trap_home_pos = trap_sprite.position
+	_xavier_home_pos = xavier_sprite.position
+	_xavier_home_scale = xavier_sprite.scale
 
 	run_button.pressed.connect(_on_run_pressed)
 
@@ -88,7 +95,11 @@ func start_new_round() -> void:
 
 	trap_sprite.texture = TRAP_MOUTH_FRAMES[0]
 	trap_sprite.modulate = RISK_COLORS[0]
-	xavier_sprite.texture = TEX_XAVIER_BRACE
+	xavier_sprite.texture = TEX_XAVIER
+	xavier_sprite.position = _xavier_home_pos
+	xavier_sprite.scale = _xavier_home_scale
+	xavier_sprite.rotation = 0.0
+	xavier_sprite.modulate = Color(1, 1, 1, 1)
 
 	_update_points_label(0)
 	_update_meter(0.0)
@@ -175,7 +186,7 @@ func _on_run_pressed() -> void:
 	_finish_tutorial_if_needed()
 
 	var points := _current_points()
-	xavier_sprite.texture = TEX_XAVIER_CHEER
+	_play_cheer()
 	ProceduralAudio.play_sfx("bank")
 
 	var result := GameManager.bank(points)
@@ -196,7 +207,7 @@ func _do_snap() -> void:
 
 	trap_sprite.texture = TEX_TRAP_SNAP
 	trap_sprite.modulate = Color(1, 1, 1, 1)
-	xavier_sprite.texture = TEX_XAVIER_BONK
+	_play_bonk()
 	ProceduralAudio.play_sfx("snap")
 	_shake_trap()
 
@@ -210,6 +221,34 @@ func _shake_trap() -> void:
 		var offset := Vector2(_rng.randf_range(-10, 10), _rng.randf_range(-6, 6))
 		tw.tween_property(trap_sprite, "position", _trap_home_pos + offset, 0.04)
 	tw.tween_property(trap_sprite, "position", _trap_home_pos, 0.04)
+
+
+## Knockback + red flash: a quick shove backward-and-down with a squash,
+## conveying "caught" without a separate baked bonk pose.
+func _play_bonk() -> void:
+	var kick_pos := _xavier_home_pos + Vector2(-24, 12)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(xavier_sprite, "position", kick_pos, 0.12).set_trans(Tween.TRANS_QUAD)
+	tw.tween_property(xavier_sprite, "rotation", -0.35, 0.12)
+	tw.tween_property(xavier_sprite, "modulate", BONK_FLASH, 0.08)
+	tw.chain().tween_property(xavier_sprite, "modulate", Color(1, 1, 1, 1), 0.3)
+	tw.chain().tween_property(xavier_sprite, "position", _xavier_home_pos, 0.3).set_trans(Tween.TRANS_BOUNCE)
+	tw.parallel().tween_property(xavier_sprite, "rotation", 0.0, 0.3)
+
+
+## Hop + gold flash: a happy little bounce up, conveying "escaped safely"
+## without a separate baked cheer pose.
+func _play_cheer() -> void:
+	var hop_pos := _xavier_home_pos + Vector2(0, -36)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(xavier_sprite, "position", hop_pos, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(xavier_sprite, "scale", _xavier_home_scale * 1.15, 0.18)
+	tw.tween_property(xavier_sprite, "modulate", CHEER_FLASH, 0.1)
+	tw.chain().tween_property(xavier_sprite, "modulate", Color(1, 1, 1, 1), 0.3)
+	tw.chain().tween_property(xavier_sprite, "position", _xavier_home_pos, 0.3).set_trans(Tween.TRANS_BOUNCE)
+	tw.parallel().tween_property(xavier_sprite, "scale", _xavier_home_scale, 0.3)
 
 
 func _update_points_label(points: int) -> void:

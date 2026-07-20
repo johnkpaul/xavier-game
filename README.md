@@ -6,8 +6,9 @@ every second he holds out. Tap the one and only button — **RUN** — before
 the mouth snaps shut to bank those points. Wait too long and the mouth
 catches him: no permanent penalty, just a silly "bonk" and a fresh round.
 Built for Godot 4.2+, mobile web first. Every texture and sound is
-generated in code — there are no imported art or audio files anywhere in
-this project.
+generated in code, with one deliberate exception: Xavier's own sprite is a
+real AI-generated image (via [Sprixen](https://sprixen.com)) checked into
+`imported_assets/` — see "Art pipeline" below.
 
 ## Opening in Godot
 
@@ -75,11 +76,12 @@ near-silent buffer to wake the browser's audio context before the background mus
 ```
 project.godot              Window/stretch/input config, autoloads
 default_bus_layout.tres    Master/SFX/BGM audio buses
+imported_assets/           Real (non-procedural) art - currently just xavier_sprite.png
 scenes/                    All .tscn scene files
 scripts/
   game_manager.gd           Autoload: total points banked, best round, milestone progress
   procedural_audio.gd        Autoload: generates & plays all SFX/BGM
-  procedural_art.gd          Generates every PNG into generated_assets/
+  procedural_art.gd          Generates every other PNG into generated_assets/
   game.gd                     The hold-your-nerve loop itself: hidden snap timer, live
                                points ticking, run/snap animation, HUD updates
   touch_button.gd              Generic big touch/mouse button with press feedback
@@ -89,9 +91,31 @@ build.sh / build.bat        Generate assets + export the Web build
 export_presets.cfg          HTML5 "Web" export preset
 ```
 
+## Art pipeline
+
+Everything except Xavier himself is still generated in code at build/first-run time
+(`scripts/procedural_art.gd` → `generated_assets/`, which is git-ignored and
+regenerated on demand). Xavier's sprite (`imported_assets/xavier_sprite.png`) is a real
+downloaded image from [Sprixen](https://sprixen.com), an AI sprite generator, and **is**
+checked into git — `procedural_art.gd` no longer draws him, and nothing regenerates or
+overwrites that file automatically.
+
+He's a single side-profile pose (bracing, facing right). There's no separate bonk/cheer
+artwork - those states are conveyed with code-driven tweens instead (`_play_bonk()` /
+`_play_cheer()` in `game.gd`: a knockback + red flash, or a hop + gold flash), so a new
+pose never needs to be regenerated just to add a new reaction. The trap creature and
+background are still fully procedural, which is a known, deliberate style mismatch for
+now - see conversation history for the plan to bring the trap over to Sprixen too.
+
+If you regenerate or replace `xavier_sprite.png`, note that Sprixen's API forces a
+"side-scroller" camera angle unless you explicitly request `viewAngle: front_facing` at
+the *project* level (`POST /v1/projects`) - the per-generation prompt alone can't
+override it.
+
 ## Design constraints (for future contributors)
 
-- No imported art/audio files — everything is generated via `Image`/`AudioStreamWAV` APIs.
+- Everything is generated via `Image`/`AudioStreamWAV` APIs, except Xavier's sprite (see
+  "Art pipeline" above) - that's a deliberate, documented exception, not an oversight.
 - No keyboard `InputMap` entries — touch (and mouse-as-touch for desktop testing) only.
 - Exactly one button (RUN), 480×480px, labeled and iconed as clearly as possible — the
   whole point is that a 5-year-old should never wonder what to do or how to escape.
