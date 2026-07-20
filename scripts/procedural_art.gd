@@ -38,8 +38,6 @@ const GRASS_GREEN := Color8(0x6A, 0xB8, 0x4A)
 const GRASS_DARK := Color8(0x4E, 0x92, 0x36)
 const SUN_YELLOW := Color8(0xFF, 0xE8, 0x7A)
 
-const GRAB_GREEN := Color8(0x4C, 0xAF, 0x50)
-const GRAB_GREEN_DARK := Color8(0x2E, 0x7D, 0x32)
 const RUN_BLUE := Color8(0x42, 0xA5, 0xF5)
 const RUN_BLUE_DARK := Color8(0x1E, 0x6F, 0xB0)
 
@@ -62,17 +60,10 @@ static func run_all() -> void:
 	_save(_make_trap_mouth_open(), "trap_mouth_open")
 	_save(_make_trap_mouth_snap(), "trap_mouth_snap")
 
-	_save(_make_treat(Color8(0xE5, 0x39, 0x35)), "treat_red")
-	_save(_make_treat(Color8(0x42, 0xA5, 0xF5)), "treat_blue")
-	_save(_make_treat(Color8(0xFF, 0xC1, 0x07)), "treat_yellow")
-
 	_save(_make_background(), "background")
 
-	_save(_make_button_base(GRAB_GREEN, GRAB_GREEN_DARK), "button_grab")
 	_save(_make_button_base(RUN_BLUE, RUN_BLUE_DARK), "button_run")
-	_save(_make_icon_hand(), "icon_hand")
 	_save(_make_icon_run(), "icon_run")
-	_save(_make_icon_treat(), "icon_treat_hud")
 
 	_save(_make_meter_frame(), "ui_meter_frame")
 	_save(_make_meter_fill(), "ui_meter_fill")
@@ -340,15 +331,6 @@ static func _make_trap_mouth_snap() -> Image:
 # bright variants so each round's treat looks a little different.
 # ---------------------------------------------------------------------------
 
-static func _make_treat(color: Color) -> Image:
-	var img := _new_image(20, 20)
-	var c := 10.0
-	_fill_diamond(img, c, c, 15, 17, color)
-	_fill_diamond(img, c, c - 1.5, 8, 9, color.lightened(0.4))
-	_stroke_ellipse(img, c, c, 7.5, 8.5, 1.5, color.darkened(0.35))
-	return img
-
-
 # ---------------------------------------------------------------------------
 # Background (480x270 logical) - sunny yard: sky, sun, clouds, grass.
 # ---------------------------------------------------------------------------
@@ -398,44 +380,24 @@ static func _make_button_base(fill_color: Color, outline_color: Color) -> Image:
 	return img
 
 
-static func _make_icon_hand() -> Image:
-	var img := _new_image(32, 32)
-	_fill_rect(img, 9, 14, 16, 14, CLOUD_WHITE)
-	_fill_rect(img, 9, 26, 16, 3, CLOUD_WHITE.darkened(0.1))
-	for i in range(4):
-		_fill_rect(img, 10 + i * 4, 3, 3, 13, CLOUD_WHITE)
-	_fill_rect(img, 4, 16, 6, 4, CLOUD_WHITE)
-	return img
-
-
+## A running stick figure, drawn mid-stride (leaning forward, one leg
+## kicked back, arms pumping) - the only control in the whole game, so it
+## needs to read as "escape!" instantly rather than needing an arrow or
+## chevron to be interpreted as "go".
 static func _make_icon_run() -> Image:
 	var img := _new_image(32, 32)
-	_fill_triangle_rot90(img, 3, 8, 13, 16)
-	_fill_triangle_rot90(img, 16, 8, 13, 16)
-	return img
-
-
-static func _fill_triangle_rot90(img: Image, x: float, y: float, h: float, w: float) -> void:
-	# A triangle pointing right, used twice to form a ">>" run/forward icon.
-	x *= SCALE
-	y *= SCALE
-	w *= SCALE
-	h *= SCALE
-	var iw := int(w)
-	for px in range(iw):
-		var t := float(px) / float(iw - 1) if iw > 1 else 0.0
-		var half_h := (t * h) / 2.0
-		var cy := y + h / 2.0
-		var miny := int(round(cy - half_h))
-		var maxy := int(round(cy + half_h))
-		for py in range(miny, maxy + 1):
-			if (x + px) >= 0 and py >= 0 and (x + px) < img.get_width() and py < img.get_height():
-				img.set_pixel(int(x + px), py, CLOUD_WHITE)
-
-
-static func _make_icon_treat() -> Image:
-	var img := _new_image(32, 32)
-	_fill_diamond(img, 16, 16, 22, 25, CLOUD_WHITE)
+	const T := 3.2
+	# Speed lines trailing behind (to the left) reinforce "moving fast" even
+	# before the pose itself is parsed.
+	_draw_line(img, 1, 14, 7, 14, 1.8, CLOUD_WHITE)
+	_draw_line(img, 0, 19, 6, 19, 1.8, CLOUD_WHITE)
+	_draw_line(img, 2, 24, 8, 24, 1.8, CLOUD_WHITE)
+	_fill_circle(img, 21, 6, 3.4, CLOUD_WHITE)
+	_draw_line(img, 19, 9, 13, 17, T, CLOUD_WHITE)
+	_draw_line(img, 13, 17, 19, 25, T, CLOUD_WHITE)
+	_draw_line(img, 13, 17, 5, 21, T, CLOUD_WHITE)
+	_draw_line(img, 16, 12, 24, 10, T, CLOUD_WHITE)
+	_draw_line(img, 16, 14, 8, 12, T, CLOUD_WHITE)
 	return img
 
 

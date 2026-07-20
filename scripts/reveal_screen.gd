@@ -1,19 +1,26 @@
 extends CanvasLayer
 class_name RevealScreen
 
-## Full-screen celebration shown every time Xavier banks his way past
-## another milestone of total treats (see GameManager.MILESTONE_STEP).
+## Full-screen celebration shown whenever Xavier either sets a new bravery
+## record (held out longer than ever before and still escaped) or banks his
+## way past another milestone of total points (see GameManager.MILESTONE_STEP).
 ## Purely a fun pause between rounds - no unlockable content is gated
 ## behind it in this first pass, easy to add later.
 
 signal reveal_complete
 
-const MESSAGES := [
-	"YOU'RE SO QUICK!",
-	"WOW, LOOK AT ALL THOSE TREATS!",
+const RECORD_MESSAGES := [
+	"THAT WAS SO BRAVE!",
+	"YOU HELD OUT LONGER THAN EVER!",
+	"THE MOUTH ALMOST GOT YOU!",
+	"XAVIER THE BRAVEST!",
+]
+
+const MILESTONE_MESSAGES := [
+	"KEEP BEING BRAVE, XAVIER!",
 	"THE MOUTH CAN'T CATCH YOU!",
+	"WOW, LOOK AT ALL THOSE POINTS!",
 	"XAVIER THE TREAT CHAMPION!",
-	"KEEP GOING, XAVIER!",
 ]
 
 const ORANGE := Color(1.0, 0.55, 0.15)
@@ -41,10 +48,14 @@ func _ready() -> void:
 	tap_hint.modulate.a = 0.0
 
 
-func play(milestone_index: int) -> void:
-	var total: int = milestone_index * GameManager.MILESTONE_STEP
-	headline.text = "%d TREATS BANKED!" % total
-	subline.text = MESSAGES[(milestone_index - 1) % MESSAGES.size()]
+func play(points: int, is_new_best: bool, milestone: int) -> void:
+	if is_new_best:
+		headline.text = "NEW BRAVERY RECORD: %d!" % points
+		subline.text = RECORD_MESSAGES[GameManager.best_round % RECORD_MESSAGES.size()]
+	else:
+		var total: int = milestone * GameManager.MILESTONE_STEP
+		headline.text = "%d POINTS BANKED!" % total
+		subline.text = MILESTONE_MESSAGES[(milestone - 1) % MILESTONE_MESSAGES.size()]
 
 	visible = true
 	_ready_for_tap = false

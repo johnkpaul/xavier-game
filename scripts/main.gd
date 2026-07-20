@@ -2,8 +2,9 @@ extends Node
 class_name Main
 
 ## Root of the game: title screen -> Snap Trap gameplay, forever (there are
-## no discrete levels here - the game is one continuous push-your-luck loop
-## with celebration screens popping in at treat milestones).
+## no discrete levels here - the game is one continuous hold-your-nerve loop
+## with celebration screens popping in for new bravery records and point
+## milestones).
 
 const GAME_SCENE := preload("res://scenes/game.tscn")
 const REVEAL_SCENE := preload("res://scenes/reveal_screen.tscn")
@@ -26,7 +27,7 @@ func _ready() -> void:
 
 	game = GAME_SCENE.instantiate()
 	game_container.add_child(game)
-	game.milestone_reached.connect(_on_milestone_reached)
+	game.celebration.connect(_on_celebration)
 
 	title_screen.visible = true
 	_title_ready = false
@@ -58,9 +59,9 @@ func _start_game() -> void:
 	title_screen.visible = false
 
 
-func _on_milestone_reached(index: int) -> void:
+func _on_celebration(points: int, is_new_best: bool, milestone: int) -> void:
 	if not reveal:
 		reveal = REVEAL_SCENE.instantiate()
 		add_child(reveal)
 		reveal.reveal_complete.connect(func(): game.start_new_round())
-	reveal.play(index)
+	reveal.play(points, is_new_best, milestone)
