@@ -20,6 +20,12 @@ const MAX_SNAP_TIME := 5.0
 const METER_SPAN := MAX_SNAP_TIME
 const POINTS_PER_SECOND := 10.0
 
+## The very first round ever played runs long and slow instead of drawing a
+## normal random snap time, so there's a comfortable window to narrate the
+## whole loop once before real play begins.
+const TUTORIAL_SNAP_TIME := 9.0
+const TUTORIAL_WATCH_DURATION := 2.4
+
 const RISK_COLORS: Array[Color] = [
 	Color8(0x4C, 0xAF, 0x50), Color8(0xFF, 0xD5, 0x4F),
 	Color8(0xFF, 0x8A, 0x3D), Color8(0xE5, 0x39, 0x35),
@@ -47,14 +53,18 @@ const TEX_XAVIER_CHEER := preload("res://generated_assets/xavier_cheer.png")
 @onready var meter_fill: TextureRect = $HUD/RiskMeter/FillClip/Fill
 @onready var points_label: Label = $HUD/PointsLabel
 @onready var total_label: Label = $HUD/TotalLabel
+@onready var tutorial_label: Label = $HUD/TutorialLabel
 @onready var run_button: TouchButton = $Controls/RunButton
+@onready var hint_arrow: TextureRect = $Controls/HintArrow
 
 var _elapsed := 0.0
 var _snap_time := 0.0
 var _active := false
 var _busy := false
+var _is_tutorial_round := false
 var _rng := RandomNumberGenerator.new()
 var _trap_home_pos: Vector2
+var _hint_arrow_tween: Tween
 
 
 func _ready() -> void:
@@ -71,7 +81,8 @@ func _ready() -> void:
 
 func start_new_round() -> void:
 	_elapsed = 0.0
-	_snap_time = _rng.randf_range(MIN_SNAP_TIME, MAX_SNAP_TIME)
+	_is_tutorial_round = not GameManager.has_seen_tutorial
+	_snap_time = TUTORIAL_SNAP_TIME if _is_tutorial_round else _rng.randf_range(MIN_SNAP_TIME, MAX_SNAP_TIME)
 	_busy = false
 	_active = true
 
@@ -83,6 +94,59 @@ func start_new_round() -> void:
 	_update_meter(0.0)
 	run_button.set_enabled(true)
 	run_button.set_urgency(0.0)
+
+	if _is_tutorial_round:
+		_play_tutorial_intro()
+	else:
+		_hide_tutorial_hints()
+
+
+func _play_tutorial_intro() -> void:
+	tutorial_label.visible = true
+	tutorial_label.modulate.a = 0.0
+	tutorial_label.text = "WATCH THE MOUTH GET CLOSER..."
+	var tw := create_tween()
+	tw.tween_property(tutorial_label, "modulate:a", 1.0, 0.3)
+
+	await get_tree().create_timer(TUTORIAL_WATCH_DURATION).timeout
+	if not _is_tutorial_round or not _active:
+		return
+
+	tutorial_label.text = "TAP RUN TO ESCAPE SAFELY!"
+	hint_arrow.visible = true
+	hint_arrow.modulate.a = 0.0
+	var tw2 := create_tween()
+	tw2.tween_property(hint_arrow, "modulate:a", 1.0, 0.25)
+	_start_hint_arrow_bounce()
+
+
+func _start_hint_arrow_bounce() -> void:
+	_stop_hint_arrow_bounce()
+	var base_y := hint_arrow.position.y
+	_hint_arrow_tween = create_tween()
+	_hint_arrow_tween.set_loops()
+	_hint_arrow_tween.tween_property(hint_arrow, "position:y", base_y + 20.0, 0.4).set_trans(Tween.TRANS_SINE)
+	_hint_arrow_tween.tween_property(hint_arrow, "position:y", base_y, 0.4).set_trans(Tween.TRANS_SINE)
+
+
+func _stop_hint_arrow_bounce() -> void:
+	if _hint_arrow_tween:
+		_hint_arrow_tween.kill()
+		_hint_arrow_tween = null
+
+
+func _hide_tutorial_hints() -> void:
+	tutorial_label.visible = false
+	hint_arrow.visible = false
+	_stop_hint_arrow_bounce()
+
+
+func _finish_tutorial_if_needed() -> void:
+	if not _is_tutorial_round:
+		return
+	_is_tutorial_round = false
+	GameManager.mark_tutorial_seen()
+	_hide_tutorial_hints()
 
 
 func _process(delta: float) -> void:
@@ -108,6 +172,7 @@ func _on_run_pressed() -> void:
 	_busy = true
 	run_button.set_enabled(false)
 	run_button.set_urgency(0.0)
+	_finish_tutorial_if_needed()
 
 	var points := _current_points()
 	xavier_sprite.texture = TEX_XAVIER_CHEER
@@ -127,6 +192,7 @@ func _do_snap() -> void:
 	_busy = true
 	run_button.set_enabled(false)
 	run_button.set_urgency(0.0)
+	_finish_tutorial_if_needed()
 
 	trap_sprite.texture = TEX_TRAP_SNAP
 	trap_sprite.modulate = Color(1, 1, 1, 1)

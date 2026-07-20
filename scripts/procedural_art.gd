@@ -70,6 +70,7 @@ static func run_all() -> void:
 
 	_save(_make_button_base(RUN_BLUE, RUN_BLUE_DARK), "button_run")
 	_save(_make_icon_run(), "icon_run")
+	_save(_make_icon_point_down(), "icon_point_down")
 
 	_save(_make_meter_frame(), "ui_meter_frame")
 	_save(_make_meter_fill(), "ui_meter_fill")
@@ -418,6 +419,32 @@ static func _make_icon_run() -> Image:
 	_draw_line(img, 16, 12, 24, 10, T, CLOUD_WHITE)
 	_draw_line(img, 16, 14, 8, 12, T, CLOUD_WHITE)
 	return img
+
+
+## A bouncing down-pointing arrow used only during the first-time guided
+## walkthrough, to point at the RUN button unmistakably.
+static func _make_icon_point_down() -> Image:
+	var img := _new_image(32, 32)
+	_fill_triangle_down(img, 2, 2, 28, 20, STAR_YELLOW)
+	_fill_rect(img, 11, 22, 10, 8, STAR_YELLOW)
+	return img
+
+
+static func _fill_triangle_down(img: Image, x: float, y: float, w: float, h: float, color: Color) -> void:
+	x *= SCALE
+	y *= SCALE
+	w *= SCALE
+	h *= SCALE
+	var ih := int(h)
+	for py in range(ih):
+		var t := float(py) / float(ih - 1) if ih > 1 else 0.0
+		var half_w := ((1.0 - t) * w) / 2.0
+		var cx := x + w / 2.0
+		var minx := int(round(cx - half_w))
+		var maxx := int(round(cx + half_w))
+		for px in range(minx, maxx + 1):
+			if px >= 0 and (y + py) >= 0 and px < img.get_width() and (y + py) < img.get_height():
+				img.set_pixel(px, y + py, color)
 
 
 # ---------------------------------------------------------------------------

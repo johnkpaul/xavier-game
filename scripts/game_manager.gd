@@ -11,7 +11,7 @@ const SAVE_PATH := "user://progress.save"
 
 ## Bumped by hand on every deploy so the on-screen build tag makes it
 ## obvious whether a device is showing a stale cached build.
-const BUILD_VERSION := "2026-07-20.3"
+const BUILD_VERSION := "2026-07-20.4"
 
 ## A reveal screen celebrates every MILESTONE_STEP points banked in total.
 const MILESTONE_STEP := 50
@@ -22,6 +22,11 @@ var best_round := 0
 ## Highest milestone index already celebrated (0 = none yet), persisted so
 ## replaying the game doesn't re-show reveals already seen this session.
 var milestones_seen := 0
+
+## Whether the first-time guided walkthrough (slow first round + arrow
+## pointing at RUN) has already played. Persisted so it only ever shows
+## once per player, not once per session.
+var has_seen_tutorial := false
 
 
 func _ready() -> void:
@@ -53,10 +58,17 @@ func bank(round_points: int) -> Dictionary:
 	return {"is_new_best": is_new_best, "milestone": milestone}
 
 
+func mark_tutorial_seen() -> void:
+	if not has_seen_tutorial:
+		has_seen_tutorial = true
+		save_progress()
+
+
 func reset_progress() -> void:
 	total_points = 0
 	best_round = 0
 	milestones_seen = 0
+	has_seen_tutorial = false
 	if FileAccess.file_exists(SAVE_PATH):
 		var dir := DirAccess.open("user://")
 		if dir:
@@ -71,6 +83,7 @@ func save_progress() -> void:
 			"total_points": total_points,
 			"best_round": best_round,
 			"milestones_seen": milestones_seen,
+			"has_seen_tutorial": has_seen_tutorial,
 		})
 
 
@@ -85,3 +98,4 @@ func load_progress() -> void:
 		total_points = value.get("total_points", 0)
 		best_round = value.get("best_round", 0)
 		milestones_seen = value.get("milestones_seen", 0)
+		has_seen_tutorial = value.get("has_seen_tutorial", false)
