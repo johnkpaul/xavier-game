@@ -25,7 +25,16 @@ const RISK_COLORS: Array[Color] = [
 	Color8(0xFF, 0x8A, 0x3D), Color8(0xE5, 0x39, 0x35),
 ]
 
-const TEX_TRAP_OPEN := preload("res://generated_assets/trap_mouth_open.png")
+## Closing flipbook: index 0 = fully open (least risk) ... last index =
+## almost shut (highest risk before the actual bite). Swapped by risk t so
+## the danger is something Xavier can visibly see closing in, not just a
+## color shift or an abstract meter.
+const TRAP_MOUTH_FRAMES := [
+	preload("res://generated_assets/trap_mouth_stage0.png"),
+	preload("res://generated_assets/trap_mouth_stage1.png"),
+	preload("res://generated_assets/trap_mouth_stage2.png"),
+	preload("res://generated_assets/trap_mouth_stage3.png"),
+]
 const TEX_TRAP_SNAP := preload("res://generated_assets/trap_mouth_snap.png")
 const TEX_XAVIER_IDLE := preload("res://generated_assets/xavier_idle.png")
 const TEX_XAVIER_BRACE := preload("res://generated_assets/xavier_reach.png")
@@ -66,13 +75,14 @@ func start_new_round() -> void:
 	_busy = false
 	_active = true
 
-	trap_sprite.texture = TEX_TRAP_OPEN
+	trap_sprite.texture = TRAP_MOUTH_FRAMES[0]
 	trap_sprite.modulate = RISK_COLORS[0]
 	xavier_sprite.texture = TEX_XAVIER_BRACE
 
 	_update_points_label(0)
 	_update_meter(0.0)
 	run_button.set_enabled(true)
+	run_button.set_urgency(0.0)
 
 
 func _process(delta: float) -> void:
@@ -97,6 +107,7 @@ func _on_run_pressed() -> void:
 	_active = false
 	_busy = true
 	run_button.set_enabled(false)
+	run_button.set_urgency(0.0)
 
 	var points := _current_points()
 	xavier_sprite.texture = TEX_XAVIER_CHEER
@@ -115,6 +126,7 @@ func _on_run_pressed() -> void:
 func _do_snap() -> void:
 	_busy = true
 	run_button.set_enabled(false)
+	run_button.set_urgency(0.0)
 
 	trap_sprite.texture = TEX_TRAP_SNAP
 	trap_sprite.modulate = Color(1, 1, 1, 1)
@@ -141,9 +153,16 @@ func _update_points_label(points: int) -> void:
 func _update_meter(t: float) -> void:
 	var col := _risk_color(t)
 	trap_sprite.modulate = col
+	trap_sprite.texture = TRAP_MOUTH_FRAMES[_frame_index(t)]
 	meter_fill.modulate = col
 	var full_width: float = meter_fill.size.x
 	meter_fill_clip.size.x = full_width * t
+	run_button.set_urgency(t)
+
+
+func _frame_index(t: float) -> int:
+	var last := TRAP_MOUTH_FRAMES.size() - 1
+	return clampi(int(round(t * last)), 0, last)
 
 
 func _risk_color(t: float) -> Color:

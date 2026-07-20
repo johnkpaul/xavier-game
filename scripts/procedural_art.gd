@@ -57,7 +57,13 @@ static func run_all() -> void:
 	_save(_make_xavier(2), "xavier_bonk")
 	_save(_make_xavier(3), "xavier_cheer")
 
-	_save(_make_trap_mouth_open(), "trap_mouth_open")
+	# A 4-frame closing flipbook (1.0 = fully open ... 0.0 = almost shut),
+	# swapped by game.gd as risk rises, plus the separate full-bite "snap"
+	# texture used only for the instant the trap actually catches him.
+	_save(_make_trap_mouth(1.0), "trap_mouth_stage0")
+	_save(_make_trap_mouth(0.66), "trap_mouth_stage1")
+	_save(_make_trap_mouth(0.33), "trap_mouth_stage2")
+	_save(_make_trap_mouth(0.0), "trap_mouth_stage3")
 	_save(_make_trap_mouth_snap(), "trap_mouth_snap")
 
 	_save(_make_background(), "background")
@@ -271,10 +277,15 @@ static func _make_xavier(mode: int) -> Image:
 # ---------------------------------------------------------------------------
 # The trap creature's mouth (200x170 logical). A light, near-neutral base
 # so Sprite2D.modulate can tint the whole thing green->yellow->orange->red
-# as risk rises without needing separate baked-color textures per state.
+# as risk rises. _make_trap_mouth(openness) additionally draws the mouth
+# itself physically narrower as openness drops toward 0, so the closing
+# danger is something a kid can *see happening* (teeth visibly approaching
+# each other) rather than only inferred from a color change or a bar - the
+# game generates a handful of these as a discrete closing flipbook (see
+# TRAP_MOUTH_FRAMES in run_all()) that game.gd swaps between as risk rises.
 # ---------------------------------------------------------------------------
 
-static func _make_trap_mouth_open() -> Image:
+static func _make_trap_mouth(openness: float) -> Image:
 	var img := _new_image(200, 170)
 	_fill_ellipse(img, 100, 92, 92, 70, CREATURE_BASE)
 	_stroke_ellipse(img, 100, 92, 92, 70, 4, CREATURE_OUTLINE)
@@ -285,17 +296,25 @@ static func _make_trap_mouth_open() -> Image:
 	_fill_circle(img, 62, 48, 6, VOID_BLACK)
 	_fill_circle(img, 138, 48, 6, VOID_BLACK)
 
-	# Mouth interior.
-	_fill_ellipse(img, 100, 108, 72, 42, MOUTH_INSIDE)
-	_fill_ellipse(img, 100, 124, 32, 15, TONGUE_PINK)
+	# The visible gap: full height at openness=1, a thin sliver at 0 (never
+	# fully 0 here - the actual full-closed "snap" bite is a separate,
+	# distinct texture so the real catch still reads as a sudden event).
+	var gap_ry: float = lerpf(6.0, 42.0, openness)
+	_fill_ellipse(img, 100, 108, 72, gap_ry, MOUTH_INSIDE)
+	if gap_ry > 20.0:
+		_fill_ellipse(img, 100, 108 + gap_ry * 0.1, 32, gap_ry * 0.35, TONGUE_PINK)
 
-	# Teeth: upper row hanging down, lower row pointing up.
+	# Teeth stay anchored to the (moving) top/bottom edge of the shrinking
+	# gap, so the two rows visibly close in on each other as openness drops.
+	var top_edge: float = 108.0 - gap_ry
+	var bottom_edge: float = 108.0 + gap_ry
+	var tooth_len: float = clampf(gap_ry * 0.35, 4.0, 12.0)
 	for i in range(6):
 		var tx := 48.0 + i * 21.0
-		_fill_triangle_up(img, tx, 90, 12, 12, CLOUD_WHITE)
+		_fill_triangle_up(img, tx, top_edge, 12, tooth_len, CLOUD_WHITE)
 	for i in range(6):
 		var bx := 48.0 + i * 21.0
-		_fill_rect(img, bx, 128, 12, 8, CLOUD_WHITE)
+		_fill_rect(img, bx, bottom_edge - tooth_len, 12, tooth_len, CLOUD_WHITE)
 
 	return img
 
