@@ -1,0 +1,64 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1"]
+
+[node name="Main" type="Node"]
+script = ExtResource("1")
+
+[node name="GameContainer" type="Node" parent="."]
+
+[node name="TitleScreen" type="CanvasLayer" parent="."]
+layer = 15
+
+[node name="Background" type="ColorRect" parent="TitleScreen"]
+mouse_filter = 2
+color = Color(0.101961, 0.101961, 0.101961, 1)
+size = Vector2(1920, 1080)
+
+[node name="TitleLabel" type="Label" parent="TitleScreen"]
+offset_left = 160.0
+offset_top = 300.0
+offset_right = 1760.0
+offset_bottom = 430.0
+theme_override_font_sizes/font_size = 88
+theme_override_colors/font_color = Color(1, 0.72, 0.3, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "XAVIER'S SNAP TRAP"
+
+[node name="PrologueLabel" type="Label" parent="TitleScreen"]
+offset_left = 260.0
+offset_top = 460.0
+offset_right = 1660.0
+offset_bottom = 560.0
+theme_override_font_sizes/font_size = 36
+theme_override_colors/font_color = Color(1, 1, 1, 0.8)
+autowrap_mode = 3
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "GRAB TREATS FROM THE MOUTH... BUT DON'T GET CAUGHT!"
+
+[node name="TapHint" type="Label" parent="TitleScreen"]
+offset_left = 260.0
+offset_top = 700.0
+offset_right = 1660.0
+offset_bottom = 760.0
+theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(1, 1, 1, 0.6)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "TAP TO PLAY"
+
+[node name="VersionTag" type="CanvasLayer" parent="."]
+layer = 30
+
+[node name="VersionLabel" type="Label" parent="VersionTag"]
+offset_left = 1360.0
+offset_top = 1032.0
+offset_right = 1912.0
+offset_bottom = 1076.0
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(1, 1, 1, 0.45)
+horizontal_alignment = 2
+vertical_alignment = 2
+text = "v-dev"

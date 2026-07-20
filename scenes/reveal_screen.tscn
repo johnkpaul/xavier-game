@@ -1,0 +1,40 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/reveal_screen.gd" id="1"]
+
+[node name="RevealScreen" type="CanvasLayer"]
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+mouse_filter = 2
+size = Vector2(1920, 1080)
+
+[node name="Headline" type="Label" parent="."]
+offset_left = 160.0
+offset_top = 400.0
+offset_right = 1760.0
+offset_bottom = 500.0
+theme_override_font_sizes/font_size = 84
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "10 TREATS BANKED!"
+
+[node name="Subline" type="Label" parent="."]
+offset_left = 260.0
+offset_top = 520.0
+offset_right = 1660.0
+offset_bottom = 590.0
+theme_override_font_sizes/font_size = 48
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "YOU'RE SO QUICK!"
+
+[node name="TapHint" type="Label" parent="."]
+offset_left = 260.0
+offset_top = 900.0
+offset_right = 1660.0
+offset_bottom = 960.0
+theme_override_font_sizes/font_size = 36
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "TAP TO KEEP PLAYING"
