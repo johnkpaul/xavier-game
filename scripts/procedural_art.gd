@@ -19,12 +19,7 @@ const CLOUD_WHITE := Color8(0xF5, 0xF5, 0xF5)
 const VOID_BLACK := Color8(0x1A, 0x1A, 0x1A)
 const STAR_YELLOW := Color8(0xFF, 0xD5, 0x4F)
 
-const CREATURE_BASE := Color8(0xE6, 0xDE, 0xD4)
 const CREATURE_OUTLINE := Color8(0x8A, 0x80, 0x74)
-const MOUTH_INSIDE := Color8(0x8A, 0x24, 0x24)
-const TONGUE_PINK := Color8(0xE0, 0x6E, 0x8A)
-const SNAP_RED := Color8(0xD6, 0x3B, 0x33)
-const SNAP_RED_DARK := Color8(0x9A, 0x22, 0x1E)
 
 const SKY_BLUE := Color8(0x7E, 0xD6, 0xF2)
 const SKY_LIGHT := Color8(0xC8, 0xEE, 0xFB)
@@ -46,18 +41,10 @@ func _initialize() -> void:
 static func run_all() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 
-	# Xavier himself is no longer procedural - see res://imported_assets/
-	# for his real Sprixen-generated sprite (a deliberate, documented
-	# exception to "everything is code-generated"; see README).
-
-	# A 4-frame closing flipbook (1.0 = fully open ... 0.0 = almost shut),
-	# swapped by game.gd as risk rises, plus the separate full-bite "snap"
-	# texture used only for the instant the trap actually catches him.
-	_save(_make_trap_mouth(1.0), "trap_mouth_stage0")
-	_save(_make_trap_mouth(0.66), "trap_mouth_stage1")
-	_save(_make_trap_mouth(0.33), "trap_mouth_stage2")
-	_save(_make_trap_mouth(0.0), "trap_mouth_stage3")
-	_save(_make_trap_mouth_snap(), "trap_mouth_snap")
+	# Xavier and the trap creature are no longer procedural - see
+	# res://imported_assets/ for their real Sprixen-generated sprites (a
+	# deliberate, documented exception to "everything is code-generated";
+	# see README).
 
 	_save(_make_background(), "background")
 
@@ -144,40 +131,6 @@ static func _stroke_ellipse(img: Image, cx: float, cy: float, rx: float, ry: flo
 				img.set_pixel(px, py, color)
 
 
-static func _fill_diamond(img: Image, cx: float, cy: float, w: float, h: float, color: Color) -> void:
-	cx *= SCALE
-	cy *= SCALE
-	w *= SCALE
-	h *= SCALE
-	var minx := int(max(0, cx - w / 2.0))
-	var maxx := int(min(img.get_width() - 1, cx + w / 2.0))
-	var miny := int(max(0, cy - h / 2.0))
-	var maxy := int(min(img.get_height() - 1, cy + h / 2.0))
-	for py in range(miny, maxy + 1):
-		for px in range(minx, maxx + 1):
-			var dx: float = absf(px + 0.5 - cx) / (w / 2.0)
-			var dy: float = absf(py + 0.5 - cy) / (h / 2.0)
-			if dx + dy <= 1.0:
-				img.set_pixel(px, py, color)
-
-
-static func _fill_triangle_up(img: Image, x: float, y: float, w: float, h: float, color: Color) -> void:
-	x *= SCALE
-	y *= SCALE
-	w *= SCALE
-	h *= SCALE
-	var ih := int(h)
-	for py in range(ih):
-		var t := float(py) / float(ih - 1) if ih > 1 else 0.0
-		var half_w := (t * w) / 2.0
-		var cx := x + w / 2.0
-		var minx := int(round(cx - half_w))
-		var maxx := int(round(cx + half_w))
-		for px in range(minx, maxx + 1):
-			if px >= 0 and (y + py) >= 0 and px < img.get_width() and (y + py) < img.get_height():
-				img.set_pixel(px, y + py, color)
-
-
 static func _draw_line(img: Image, x0: float, y0: float, x1: float, y1: float, thickness: float, color: Color) -> void:
 	x0 *= SCALE
 	y0 *= SCALE
@@ -199,82 +152,6 @@ static func _draw_line(img: Image, x0: float, y0: float, x1: float, y1: float, t
 					if ix >= 0 and iy >= 0 and ix < img.get_width() and iy < img.get_height():
 						img.set_pixel(ix, iy, color)
 
-
-# ---------------------------------------------------------------------------
-# The trap creature's mouth (200x170 logical). A light, near-neutral base
-# so Sprite2D.modulate can tint the whole thing green->yellow->orange->red
-# as risk rises. _make_trap_mouth(openness) additionally draws the mouth
-# itself physically narrower as openness drops toward 0, so the closing
-# danger is something a kid can *see happening* (teeth visibly approaching
-# each other) rather than only inferred from a color change or a bar - the
-# game generates a handful of these as a discrete closing flipbook (see
-# TRAP_MOUTH_FRAMES in run_all()) that game.gd swaps between as risk rises.
-# ---------------------------------------------------------------------------
-
-static func _make_trap_mouth(openness: float) -> Image:
-	var img := _new_image(200, 170)
-	_fill_ellipse(img, 100, 92, 92, 70, CREATURE_BASE)
-	_stroke_ellipse(img, 100, 92, 92, 70, 4, CREATURE_OUTLINE)
-
-	# Eyes.
-	_fill_circle(img, 62, 48, 14, CLOUD_WHITE)
-	_fill_circle(img, 138, 48, 14, CLOUD_WHITE)
-	_fill_circle(img, 62, 48, 6, VOID_BLACK)
-	_fill_circle(img, 138, 48, 6, VOID_BLACK)
-
-	# The visible gap: full height at openness=1, a thin sliver at 0 (never
-	# fully 0 here - the actual full-closed "snap" bite is a separate,
-	# distinct texture so the real catch still reads as a sudden event).
-	var gap_ry: float = lerpf(6.0, 42.0, openness)
-	_fill_ellipse(img, 100, 108, 72, gap_ry, MOUTH_INSIDE)
-	if gap_ry > 20.0:
-		_fill_ellipse(img, 100, 108 + gap_ry * 0.1, 32, gap_ry * 0.35, TONGUE_PINK)
-
-	# Teeth stay anchored to the (moving) top/bottom edge of the shrinking
-	# gap, so the two rows visibly close in on each other as openness drops.
-	var top_edge: float = 108.0 - gap_ry
-	var bottom_edge: float = 108.0 + gap_ry
-	var tooth_len: float = clampf(gap_ry * 0.35, 4.0, 12.0)
-	for i in range(6):
-		var tx := 48.0 + i * 21.0
-		_fill_triangle_up(img, tx, top_edge, 12, tooth_len, CLOUD_WHITE)
-	for i in range(6):
-		var bx := 48.0 + i * 21.0
-		_fill_rect(img, bx, bottom_edge - tooth_len, 12, tooth_len, CLOUD_WHITE)
-
-	return img
-
-
-static func _make_trap_mouth_snap() -> Image:
-	var img := _new_image(200, 170)
-	_fill_ellipse(img, 100, 92, 92, 70, SNAP_RED)
-	_stroke_ellipse(img, 100, 92, 92, 70, 4, SNAP_RED_DARK)
-
-	# Squeezed-shut eyes (happy-angry little arcs).
-	_draw_line(img, 52, 46, 72, 50, 2.0, VOID_BLACK)
-	_draw_line(img, 72, 46, 52, 50, 2.0, VOID_BLACK)
-	_draw_line(img, 128, 46, 148, 50, 2.0, VOID_BLACK)
-	_draw_line(img, 148, 46, 128, 50, 2.0, VOID_BLACK)
-
-	# Closed mouth: a single dark line with a little tooth peeking out.
-	_fill_rect(img, 40, 104, 120, 6, VOID_BLACK)
-	_fill_rect(img, 96, 100, 10, 8, CLOUD_WHITE)
-
-	# Impact burst around the mouth.
-	var burst_pts := [
-		Vector2(20, 92), Vector2(180, 92), Vector2(30, 60), Vector2(170, 60),
-		Vector2(30, 130), Vector2(170, 130),
-	]
-	for p in burst_pts:
-		_fill_diamond(img, p.x, p.y, 14, 14, STAR_YELLOW)
-
-	return img
-
-
-# ---------------------------------------------------------------------------
-# Treat (20x20 logical) - simple candy gem, offered pre-colored in a few
-# bright variants so each round's treat looks a little different.
-# ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
 # Background (480x270 logical) - sunny yard: sky, sun, clouds, grass.

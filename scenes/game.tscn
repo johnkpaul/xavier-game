@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/game.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/touch_button.gd" id="2"]
 [ext_resource type="Texture2D" path="res://generated_assets/background.png" id="3"]
-[ext_resource type="Texture2D" path="res://generated_assets/trap_mouth_stage0.png" id="4"]
+[ext_resource type="Texture2D" path="res://imported_assets/trap_stage0.png" id="4"]
 [ext_resource type="Texture2D" path="res://imported_assets/xavier_sprite.png" id="5"]
 [ext_resource type="Texture2D" path="res://generated_assets/ui_meter_frame.png" id="6"]
 [ext_resource type="Texture2D" path="res://generated_assets/ui_meter_fill.png" id="7"]
@@ -20,6 +20,7 @@ texture = ExtResource("3")
 
 [node name="Trap" type="Sprite2D" parent="."]
 position = Vector2(960, 460)
+scale = Vector2(6, 6)
 texture = ExtResource("4")
 
 [node name="Xavier" type="Sprite2D" parent="."]

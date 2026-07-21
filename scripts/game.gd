@@ -48,14 +48,17 @@ const RISK_COLORS: Array[Color] = [
 
 ## Closing flipbook: index 0 = fully open ... last index = almost shut.
 ## Swapped continuously as the mouth's cycle phase changes, so the danger is
-## something Xavier can visibly watch rise and fall in a steady rhythm.
+## something Xavier can visibly watch rise and fall in a steady rhythm. Real
+## Sprixen-generated frames (see res://imported_assets/) rather than
+## procedural art - see README's "Art pipeline" section.
 const TRAP_MOUTH_FRAMES := [
-	preload("res://generated_assets/trap_mouth_stage0.png"),
-	preload("res://generated_assets/trap_mouth_stage1.png"),
-	preload("res://generated_assets/trap_mouth_stage2.png"),
-	preload("res://generated_assets/trap_mouth_stage3.png"),
+	preload("res://imported_assets/trap_stage0.png"),
+	preload("res://imported_assets/trap_stage1.png"),
+	preload("res://imported_assets/trap_stage2.png"),
+	preload("res://imported_assets/trap_stage3.png"),
+	preload("res://imported_assets/trap_stage4.png"),
 ]
-const TEX_TRAP_SNAP := preload("res://generated_assets/trap_mouth_snap.png")
+const TEX_TRAP_SNAP := preload("res://imported_assets/trap_bite.png")
 
 ## Xavier has one real sprite (see res://imported_assets/) rather than a
 ## separate baked image per pose. Catches/successes are conveyed with
@@ -337,11 +340,14 @@ func _update_streak_label() -> void:
 	streak_label.text = "Streak: %d" % _current_streak
 
 
+## The trap's real art carries its own color, so danger is conveyed purely
+## by which physical closing frame is showing (see TRAP_MOUTH_FRAMES) - no
+## modulate tint on the creature itself, which would just muddy its colors.
+## The green->red ramp still drives the UI risk meter, though.
 func _update_meter(danger_t: float) -> void:
-	var col := _risk_color(danger_t)
 	if danger_t < 1.0:
 		trap_sprite.texture = TRAP_MOUTH_FRAMES[_frame_index(danger_t)]
-	trap_sprite.modulate = col
+	var col := _risk_color(danger_t)
 	meter_fill.modulate = col
 	var full_width: float = meter_fill.size.x
 	meter_fill_clip.size.x = full_width * danger_t
