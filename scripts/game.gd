@@ -70,6 +70,8 @@ var _trap_home_pos: Vector2
 var _xavier_home_pos: Vector2
 var _xavier_home_scale: Vector2
 var _hint_arrow_tween: Tween
+var _idle_bob_tween: Tween
+var _flee_bob_tween: Tween
 
 
 func _ready() -> void:
@@ -105,6 +107,7 @@ func start_new_round() -> void:
 	_update_meter(0.0)
 	run_button.set_enabled(true)
 	run_button.set_urgency(0.0)
+	_start_idle_bob()
 
 	if _is_tutorial_round:
 		_play_tutorial_intro()
@@ -181,6 +184,7 @@ func _on_run_pressed() -> void:
 		return
 	_active = false
 	_busy = true
+	_stop_idle_bob()
 	run_button.set_enabled(false)
 	run_button.set_urgency(0.0)
 	_finish_tutorial_if_needed()
@@ -191,7 +195,7 @@ func _on_run_pressed() -> void:
 
 	var result := GameManager.bank(points)
 
-	await get_tree().create_timer(0.9).timeout
+	await get_tree().create_timer(1.0).timeout
 
 	if result["is_new_best"] or result["milestone"] > 0:
 		celebration.emit(points, result["is_new_best"], result["milestone"])
@@ -201,6 +205,7 @@ func _on_run_pressed() -> void:
 
 func _do_snap() -> void:
 	_busy = true
+	_stop_idle_bob()
 	run_button.set_enabled(false)
 	run_button.set_urgency(0.0)
 	_finish_tutorial_if_needed()
@@ -237,18 +242,52 @@ func _play_bonk() -> void:
 	tw.parallel().tween_property(xavier_sprite, "rotation", 0.0, 0.3)
 
 
-## Hop + gold flash: a happy little bounce up, conveying "escaped safely"
-## without a separate baked cheer pose.
+## A gentle up/down bob while Xavier braces, so the "waiting" state visibly
+## reads as alive/running rather than a frozen static image.
+func _start_idle_bob() -> void:
+	_stop_idle_bob()
+	var base_y := _xavier_home_pos.y
+	_idle_bob_tween = create_tween()
+	_idle_bob_tween.set_loops()
+	_idle_bob_tween.tween_property(xavier_sprite, "position:y", base_y - 8.0, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_idle_bob_tween.tween_property(xavier_sprite, "position:y", base_y, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+func _stop_idle_bob() -> void:
+	if _idle_bob_tween:
+		_idle_bob_tween.kill()
+		_idle_bob_tween = null
+
+
+## Xavier actually turns and sprints off the left edge of the screen, away
+## from the trap - not just a hop in place - since tapping RUN should look
+## like running. He's reset back to his brace position (off-screen at that
+## point) the moment the next round or celebration screen takes over.
+const FLEE_TARGET_X := -260.0
+const FLEE_DURATION := 0.55
+
 func _play_cheer() -> void:
-	var hop_pos := _xavier_home_pos + Vector2(0, -36)
-	var tw := create_tween()
-	tw.set_parallel(true)
-	tw.tween_property(xavier_sprite, "position", hop_pos, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw.tween_property(xavier_sprite, "scale", _xavier_home_scale * 1.15, 0.18)
-	tw.tween_property(xavier_sprite, "modulate", CHEER_FLASH, 0.1)
-	tw.chain().tween_property(xavier_sprite, "modulate", Color(1, 1, 1, 1), 0.3)
-	tw.chain().tween_property(xavier_sprite, "position", _xavier_home_pos, 0.3).set_trans(Tween.TRANS_BOUNCE)
-	tw.parallel().tween_property(xavier_sprite, "scale", _xavier_home_scale, 0.3)
+	xavier_sprite.scale.x = -absf(_xavier_home_scale.x)
+
+	var flash_tw := create_tween()
+	flash_tw.tween_property(xavier_sprite, "modulate", CHEER_FLASH, 0.1)
+	flash_tw.tween_property(xavier_sprite, "modulate", Color(1, 1, 1, 1), 0.3)
+
+	var move_tw := create_tween()
+	move_tw.tween_property(xavier_sprite, "position:x", FLEE_TARGET_X, FLEE_DURATION) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	move_tw.tween_callback(_stop_flee_bob)
+
+	_flee_bob_tween = create_tween()
+	_flee_bob_tween.set_loops()
+	_flee_bob_tween.tween_property(xavier_sprite, "position:y", _xavier_home_pos.y - 12.0, 0.09).set_trans(Tween.TRANS_SINE)
+	_flee_bob_tween.tween_property(xavier_sprite, "position:y", _xavier_home_pos.y, 0.09).set_trans(Tween.TRANS_SINE)
+
+
+func _stop_flee_bob() -> void:
+	if _flee_bob_tween:
+		_flee_bob_tween.kill()
+		_flee_bob_tween = null
 
 
 func _update_points_label(points: int) -> void:
