@@ -143,7 +143,7 @@ func _play_tutorial_intro() -> void:
 	if not _is_tutorial_active:
 		return
 
-	tutorial_label.text = "TAP RUN WHEN IT'S OPEN!"
+	tutorial_label.text = "TAP RUN WHEN IT'S CLOSED!"
 	hint_arrow.visible = true
 	hint_arrow.modulate.a = 0.0
 	var tw2 := create_tween()
@@ -185,8 +185,9 @@ func _process(delta: float) -> void:
 		return
 
 	_cycle_time = fmod(_cycle_time + delta, _cycle_duration)
-	var danger_t := _danger_level(_cycle_time)
-	_update_meter(danger_t)
+	var closedness := _closedness(_cycle_time)
+	var danger_t := _danger_from_closedness(closedness)
+	_update_meter(closedness, danger_t)
 
 	if _crossing:
 		_crossing_elapsed += delta
@@ -199,13 +200,25 @@ func _process(delta: float) -> void:
 
 ## 0.0 = fully open, 1.0 = fully closed. A symmetric triangle wave peaking
 ## at the cycle's midpoint, so the rhythm is exactly as predictable as it
-## looks - no hidden randomness anywhere in this mechanic.
-func _danger_level(t: float) -> float:
+## looks - no hidden randomness anywhere in this mechanic. This purely
+## describes the mouth's physical state and always drives which frame is
+## shown - it's deliberately kept separate from "danger" below, since the
+## two aren't the same thing.
+func _closedness(t: float) -> float:
 	var phase := t / _cycle_duration
-	var closedness: float = 1.0 - 2.0 * absf(phase - 0.5)
-	if closedness >= 1.0 - DANGER_FRACTION:
+	return 1.0 - 2.0 * absf(phase - 0.5)
+
+
+## The mouth is a hazard while it's open (wide open reads as "about to
+## bite" - and a closed mouth physically can't catch anything further),
+## so danger tracks openness, not closedness. Getting this backwards
+## early on made the game feel rigged: the visuals told you "open = safe,
+## about to relax", but the catch check fired exactly then.
+func _danger_from_closedness(closedness: float) -> float:
+	var openness := 1.0 - closedness
+	if openness >= 1.0 - DANGER_FRACTION:
 		return 1.0
-	return closedness / (1.0 - DANGER_FRACTION)
+	return openness / (1.0 - DANGER_FRACTION)
 
 
 func _on_run_pressed() -> void:
@@ -341,12 +354,14 @@ func _update_streak_label() -> void:
 
 
 ## The trap's real art carries its own color, so danger is conveyed purely
-## by which physical closing frame is showing (see TRAP_MOUTH_FRAMES) - no
-## modulate tint on the creature itself, which would just muddy its colors.
-## The green->red ramp still drives the UI risk meter, though.
-func _update_meter(danger_t: float) -> void:
-	if danger_t < 1.0:
-		trap_sprite.texture = TRAP_MOUTH_FRAMES[_frame_index(danger_t)]
+## by which physical open/closed frame is showing (see TRAP_MOUTH_FRAMES) -
+## no modulate tint on the creature itself, which would just muddy its
+## colors. The green->red ramp still drives the UI risk meter, though.
+## closedness picks the frame (the mouth's true physical state); danger_t
+## drives the meter/catch logic (which tracks openness - see
+## _danger_from_closedness).
+func _update_meter(closedness: float, danger_t: float) -> void:
+	trap_sprite.texture = TRAP_MOUTH_FRAMES[_frame_index(closedness)]
 	var col := _risk_color(danger_t)
 	meter_fill.modulate = col
 	var full_width: float = meter_fill.size.x

@@ -40,10 +40,12 @@ The trap's mouth cycles open → closed → open on a fixed, predictable rhythm
 this mechanic). Xavier waits on one side, watching:
 
 1. Tap **RUN** to send him dashing to the other side (`CROSS_DURATION`, ~1 second).
-2. If the mouth is in its closed/dangerous phase while he's passing through the middle
-   (`RISK_WINDOW_START`/`RISK_WINDOW_END`, the portion of the crossing where he's actually
-   near the mouth), he's caught: knocked back to the side he started from, streak resets to
-   0, no points. No game-over screen, ever - just try the rhythm again.
+2. If the mouth is open (its dangerous phase - see `_danger_from_closedness()` in
+   `game.gd`) while he's passing through the middle (`RISK_WINDOW_START`/`RISK_WINDOW_END`,
+   the portion of the crossing where he's actually near the mouth), he's caught: knocked
+   back to the side he started from, streak resets to 0, no points. A closed mouth can't
+   catch anything further, so that's the safe window to dash through. No game-over screen,
+   ever - just try the rhythm again.
 3. If he makes it across, that crossing banks `CROSSING_POINTS` into the permanent total
    and extends his current streak (`Streak: N` in the HUD) - then he's ready to dash back
    the other way on the next tap.

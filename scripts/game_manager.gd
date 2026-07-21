@@ -11,7 +11,7 @@ const SAVE_PATH := "user://progress.save"
 
 ## Bumped by hand on every deploy so the on-screen build tag makes it
 ## obvious whether a device is showing a stale cached build.
-const BUILD_VERSION := "2026-07-21.2"
+const BUILD_VERSION := "2026-07-21.3"
 
 ## A reveal screen celebrates every MILESTONE_STEP points banked in total.
 const MILESTONE_STEP := 50
