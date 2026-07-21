@@ -259,11 +259,13 @@ func _finish_crossing() -> void:
 	await get_tree().create_timer(0.6).timeout
 
 	_busy = false
+	run_button.set_enabled(true)
+	_start_idle_bob()
+
+	# Celebrations are a non-blocking side note, not a gate on play - the
+	# next crossing is already available the moment this one resolves.
 	if result["is_new_best"] or result["milestone"] > 0:
 		celebration.emit(_current_streak, result["is_new_best"], result["milestone"])
-	else:
-		run_button.set_enabled(true)
-		_start_idle_bob()
 
 
 func _catch_mid_crossing() -> void:

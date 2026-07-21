@@ -52,8 +52,11 @@ this mechanic). Xavier waits on one side, watching:
 
 Two kinds of celebrations pop up (`scripts/reveal_screen.gd`): a **new best streak**
 whenever the current streak beats the all-time best, and a **milestone** every
-`GameManager.MILESTONE_STEP` points banked in total. The cycle timing, risk window, and
-milestone step are all small, clearly-commented constants — tune them freely.
+`GameManager.MILESTONE_STEP` points banked in total. These are a non-blocking toast that
+fades in, holds, and fades out on its own (~2 seconds total) - they never pause the game,
+disable RUN, or need a dismiss tap; Xavier keeps dashing underneath the whole time. The
+cycle timing, risk window, and milestone step are all small, clearly-commented
+constants — tune them freely.
 
 ## Exporting for mobile web
 
@@ -90,7 +93,7 @@ scripts/
   game.gd                     The dash-across loop itself: mouth cycle timing, crossing/
                                catch detection, run/bonk/cheer animation, HUD updates
   touch_button.gd              Generic big touch/mouse button with press feedback
-  reveal_screen.gd              New-record / milestone celebration overlay
+  reveal_screen.gd              New-record / milestone celebration toast (non-blocking)
   main.gd                        Title -> Game flow, asset bootstrap, audio unlock
 build.sh / build.bat        Generate assets + export the Web build
 export_presets.cfg          HTML5 "Web" export preset

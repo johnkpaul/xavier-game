@@ -1,14 +1,13 @@
 extends CanvasLayer
 class_name RevealScreen
 
-## Full-screen celebration shown whenever Xavier either sets a new best
-## crossing streak (most times in a row he's made it across without being
-## caught) or banks his way past another milestone of total points (see
-## GameManager.MILESTONE_STEP). Purely a fun pause between rounds - no
-## unlockable content is gated behind it in this first pass, easy to add
-## later.
-
-signal reveal_complete
+## Non-blocking celebration toast shown whenever Xavier either sets a new
+## best crossing streak (most times in a row he's made it across without
+## being caught) or banks his way past another milestone of total points
+## (see GameManager.MILESTONE_STEP). Fades in, holds briefly, fades out on
+## its own - it never pauses gameplay, disables input, or requires a tap to
+## dismiss. Xavier keeps dashing, the mouth keeps cycling, and RUN stays
+## live the entire time this is on screen.
 
 const RECORD_MESSAGES := [
 	"THAT WAS SO BRAVE!",
@@ -27,26 +26,36 @@ const MILESTONE_MESSAGES := [
 const ORANGE := Color(1.0, 0.55, 0.15)
 const GOLD := Color(1.0, 0.83, 0.3)
 
-@onready var background: ColorRect = $Background
+const FADE_IN := 0.35
+const HOLD := 1.4
+const FADE_OUT := 0.4
+
+@onready var backdrop: ColorRect = $Backdrop
 @onready var headline: Label = $Headline
 @onready var subline: Label = $Subline
-@onready var tap_hint: Label = $TapHint
 
-var _ready_for_tap := false
+var _tween: Tween
 
 
 func _ready() -> void:
 	layer = 20
 	visible = false
-	background.color = Color(0.101961, 0.101961, 0.101961, 0.85)
+
+	# Never intercepts input - this floats over live gameplay, it doesn't
+	# gate it. mouse_filter=IGNORE on every Control child lets taps pass
+	# straight through to the RUN button underneath (CanvasLayer itself
+	# isn't a Control and has no mouse_filter of its own).
+	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	backdrop.color = Color(0.101961, 0.101961, 0.101961, 0.55)
 
 	headline.add_theme_color_override("font_color", GOLD)
 	subline.add_theme_color_override("font_color", ORANGE)
-	tap_hint.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+	headline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	subline.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
+	backdrop.modulate.a = 0.0
 	headline.modulate.a = 0.0
 	subline.modulate.a = 0.0
-	tap_hint.modulate.a = 0.0
 
 
 func play(streak: int, is_new_best: bool, milestone: int) -> void:
@@ -58,41 +67,19 @@ func play(streak: int, is_new_best: bool, milestone: int) -> void:
 		headline.text = "%d POINTS BANKED!" % total
 		subline.text = MILESTONE_MESSAGES[(milestone - 1) % MILESTONE_MESSAGES.size()]
 
-	visible = true
-	_ready_for_tap = false
 	ProceduralAudio.play_sfx("reveal")
 
-	var tw := create_tween()
-	tw.tween_property(headline, "modulate:a", 1.0, 0.35)
-	tw.parallel().tween_property(headline, "scale", Vector2(1, 1), 0.35).from(Vector2(0.6, 0.6))
-	tw.tween_interval(0.15)
-	tw.tween_property(subline, "modulate:a", 1.0, 0.35)
-	tw.tween_interval(0.4)
-	tw.tween_callback(_show_tap_hint)
+	if _tween:
+		_tween.kill()
 
-
-func _show_tap_hint() -> void:
-	tap_hint.text = "TAP TO KEEP PLAYING"
-	var tw := create_tween()
-	tw.set_loops()
-	tw.tween_property(tap_hint, "modulate:a", 1.0, 0.5)
-	tw.tween_property(tap_hint, "modulate:a", 0.2, 0.5)
-	_ready_for_tap = true
-
-
-func _input(event: InputEvent) -> void:
-	if not visible or not _ready_for_tap:
-		return
-	if event is InputEventScreenTouch and event.pressed:
-		_continue()
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		_continue()
-
-
-func _continue() -> void:
-	_ready_for_tap = false
-	visible = false
-	headline.modulate.a = 0.0
-	subline.modulate.a = 0.0
-	tap_hint.modulate.a = 0.0
-	reveal_complete.emit()
+	visible = true
+	_tween = create_tween()
+	_tween.set_parallel(true)
+	_tween.tween_property(backdrop, "modulate:a", 1.0, FADE_IN)
+	_tween.tween_property(headline, "modulate:a", 1.0, FADE_IN)
+	_tween.tween_property(subline, "modulate:a", 1.0, FADE_IN)
+	_tween.chain().tween_interval(HOLD)
+	_tween.chain().tween_property(backdrop, "modulate:a", 0.0, FADE_OUT)
+	_tween.parallel().tween_property(headline, "modulate:a", 0.0, FADE_OUT)
+	_tween.parallel().tween_property(subline, "modulate:a", 0.0, FADE_OUT)
+	_tween.chain().tween_callback(func(): visible = false)
