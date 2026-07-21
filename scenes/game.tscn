@@ -23,7 +23,7 @@ position = Vector2(960, 460)
 texture = ExtResource("4")
 
 [node name="Xavier" type="Sprite2D" parent="."]
-position = Vector2(480, 790)
+position = Vector2(260, 790)
 scale = Vector2(1.8, 1.8)
 texture = ExtResource("5")
 
@@ -69,7 +69,7 @@ offset_bottom = 210.0
 theme_override_font_sizes/font_size = 64
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 horizontal_alignment = 1
-text = "Points: 0"
+text = "Streak: 0"
 
 [node name="TotalLabel" type="Label" parent="HUD"]
 anchor_left = 1.0

@@ -1,14 +1,16 @@
 # Xavier's Snap Trap
 
-A hold-your-nerve tap game for a 5-year-old: Xavier stands his ground in
-front of a big friendly monster's mouth, and bravery points tick up for
-every second he holds out. Tap the one and only button — **RUN** — before
-the mouth snaps shut to bank those points. Wait too long and the mouth
-catches him: no permanent penalty, just a silly "bonk" and a fresh round.
-Built for Godot 4.2+, mobile web first. Every texture and sound is
-generated in code, with one deliberate exception: Xavier's own sprite is a
-real AI-generated image (via [Sprixen](https://sprixen.com)) checked into
-`imported_assets/` — see "Art pipeline" below.
+A dash-across tap game for a 5-year-old: a big friendly monster's mouth
+opens and closes on a fixed, visible rhythm — never hidden, never random.
+Xavier waits on one side; tap the one and only button — **RUN** — to send
+him dashing to the other side. Time it with the mouth's pattern and he
+makes it across safely, banking points and extending his streak. Mistime
+it and he's caught mid-crossing, bounces back to where he started, and his
+streak resets: no permanent penalty, just a silly "bonk" and another shot
+at the rhythm. Built for Godot 4.2+, mobile web first. Every texture and
+sound is generated in code, with one deliberate exception: Xavier's own
+sprite is a real AI-generated image (via [Sprixen](https://sprixen.com))
+checked into `imported_assets/` — see "Art pipeline" below.
 
 ## Opening in Godot
 
@@ -33,22 +35,23 @@ Desktop testing uses your mouse as a stand-in for touch:
 
 ## The mechanic
 
-Every round:
-1. Xavier braces in front of the trap's mouth. Bravery points start ticking up
-   (`Points: N`), and the risk meter/mouth color creep from green toward red the longer
-   he holds out.
-2. A hidden timer (randomized per round, never shown to the player — see
-   `MIN_SNAP_TIME`/`MAX_SNAP_TIME` in `scripts/game.gd`) decides exactly when the mouth
-   snaps shut. The player never knows precisely when it'll happen, only that it's getting
-   more likely.
-3. Tap **RUN** any time to bank the points earned so far into the permanent total.
-4. If the mouth snaps before RUN is tapped, this round's points are discarded — a silly
-   "bonk" animation plays and a new round starts immediately. No game-over screen, ever.
+The trap's mouth cycles open → closed → open on a fixed, predictable rhythm
+(`CYCLE_DURATION` in `scripts/game.gd`, a symmetric triangle wave — no RNG anywhere in
+this mechanic). Xavier waits on one side, watching:
 
-Two kinds of celebrations pop up (`scripts/reveal_screen.gd`): a **new bravery record**
-whenever a banked round beats the best round so far, and a **milestone** every
-`GameManager.MILESTONE_STEP` points banked in total. Both the snap-time range and the
-milestone step are small, clearly-commented constants — tune them freely.
+1. Tap **RUN** to send him dashing to the other side (`CROSS_DURATION`, ~1 second).
+2. If the mouth is in its closed/dangerous phase while he's passing through the middle
+   (`RISK_WINDOW_START`/`RISK_WINDOW_END`, the portion of the crossing where he's actually
+   near the mouth), he's caught: knocked back to the side he started from, streak resets to
+   0, no points. No game-over screen, ever - just try the rhythm again.
+3. If he makes it across, that crossing banks `CROSSING_POINTS` into the permanent total
+   and extends his current streak (`Streak: N` in the HUD) - then he's ready to dash back
+   the other way on the next tap.
+
+Two kinds of celebrations pop up (`scripts/reveal_screen.gd`): a **new best streak**
+whenever the current streak beats the all-time best, and a **milestone** every
+`GameManager.MILESTONE_STEP` points banked in total. The cycle timing, risk window, and
+milestone step are all small, clearly-commented constants — tune them freely.
 
 ## Exporting for mobile web
 
@@ -79,11 +82,11 @@ default_bus_layout.tres    Master/SFX/BGM audio buses
 imported_assets/           Real (non-procedural) art - currently just xavier_sprite.png
 scenes/                    All .tscn scene files
 scripts/
-  game_manager.gd           Autoload: total points banked, best round, milestone progress
+  game_manager.gd           Autoload: total points banked, best streak, milestone progress
   procedural_audio.gd        Autoload: generates & plays all SFX/BGM
   procedural_art.gd          Generates every other PNG into generated_assets/
-  game.gd                     The hold-your-nerve loop itself: hidden snap timer, live
-                               points ticking, run/snap animation, HUD updates
+  game.gd                     The dash-across loop itself: mouth cycle timing, crossing/
+                               catch detection, run/bonk/cheer animation, HUD updates
   touch_button.gd              Generic big touch/mouse button with press feedback
   reveal_screen.gd              New-record / milestone celebration overlay
   main.gd                        Title -> Game flow, asset bootstrap, audio unlock
@@ -119,5 +122,7 @@ override it.
 - No keyboard `InputMap` entries — touch (and mouse-as-touch for desktop testing) only.
 - Exactly one button (RUN), 480×480px, labeled and iconed as clearly as possible — the
   whole point is that a 5-year-old should never wonder what to do or how to escape.
-- Losing a round (the mouth snaps) never ends the game or shows a game-over screen — it
-  just discards the current round's unbanked points and starts over immediately.
+- The mouth's timing is always visible and predictable, never hidden or randomized -
+  learnable pattern-reading, not a hidden-timer gamble.
+- Getting caught never ends the game or shows a game-over screen — it just bounces Xavier
+  back to the side he started from and resets the current streak.

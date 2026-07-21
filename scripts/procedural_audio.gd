@@ -69,7 +69,6 @@ func _get_free_sfx_player() -> AudioStreamPlayer:
 # ---------------------------------------------------------------------------
 
 func _build_all_sfx() -> void:
-	_sfx_streams["grab"] = _make_grab_sfx()
 	_sfx_streams["snap"] = _make_snap_sfx()
 	_sfx_streams["bank"] = _make_bank_sfx()
 	_sfx_streams["reveal"] = _make_reveal_sfx()
@@ -80,22 +79,6 @@ func _make_silent_sfx() -> AudioStreamWAV:
 	var frames := int(SAMPLE_RATE * 0.02)
 	var data := PackedByteArray()
 	data.resize(frames * 2)
-	return _wrap_pcm(data)
-
-
-## Short bright pop when a treat is grabbed - a quick upward chirp.
-func _make_grab_sfx() -> AudioStreamWAV:
-	var duration := 0.12
-	var frames := int(SAMPLE_RATE * duration)
-	var data := PackedByteArray()
-	data.resize(frames * 2)
-	var phase := 0.0
-	for i in range(frames):
-		var t := float(i) / frames
-		var freq: float = lerp(500.0, 900.0, t)
-		phase += freq / SAMPLE_RATE
-		var env: float = 1.0 - t
-		_write_sample(data, i, sin(phase * TAU) * env)
 	return _wrap_pcm(data)
 
 

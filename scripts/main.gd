@@ -2,8 +2,8 @@ extends Node
 class_name Main
 
 ## Root of the game: title screen -> Snap Trap gameplay, forever (there are
-## no discrete levels here - the game is one continuous hold-your-nerve loop
-## with celebration screens popping in for new bravery records and point
+## no discrete levels here - the game is one continuous dash-across loop
+## with celebration screens popping in for new best streaks and point
 ## milestones).
 
 const GAME_SCENE := preload("res://scenes/game.tscn")
@@ -36,7 +36,7 @@ func _ready() -> void:
 
 
 func _ensure_generated_assets() -> void:
-	var probe_path := "res://generated_assets/xavier_idle.png"
+	var probe_path := "res://generated_assets/trap_mouth_stage0.png"
 	if not FileAccess.file_exists(probe_path):
 		# Editor-convenience fallback only: an exported HTML5 build ships
 		# with generated_assets/ already baked in by build.sh.
@@ -59,9 +59,9 @@ func _start_game() -> void:
 	title_screen.visible = false
 
 
-func _on_celebration(points: int, is_new_best: bool, milestone: int) -> void:
+func _on_celebration(streak: int, is_new_best: bool, milestone: int) -> void:
 	if not reveal:
 		reveal = REVEAL_SCENE.instantiate()
 		add_child(reveal)
 		reveal.reveal_complete.connect(func(): game.start_new_round())
-	reveal.play(points, is_new_best, milestone)
+	reveal.play(streak, is_new_best, milestone)

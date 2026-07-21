@@ -19,10 +19,6 @@ var _resting_scale := 1.0
 var _resting_alpha := 1.0
 var _enabled := true
 
-var _urgency_tween: Tween
-var _urgency_bucket := -1
-const URGENCY_BUCKETS := 4
-
 
 func _ready() -> void:
 	pivot_offset = size / 2.0
@@ -53,8 +49,6 @@ func _press(idx: int) -> void:
 		return
 	_is_pressed = true
 	_touch_index = idx
-	_stop_urgency_pulse()
-	_urgency_bucket = -1
 	_animate_to(pressed_scale, pressed_alpha)
 	pressed.emit()
 	_try_haptic()
@@ -90,42 +84,6 @@ func set_shown(shown: bool) -> void:
 	_resting_alpha = (1.0 if _enabled else 0.4) if shown else 0.0
 	if not _is_pressed:
 		_animate_to(_resting_scale, _resting_alpha)
-
-
-## Continuous "hurry up" pulse independent of the press/release feedback,
-## driven by an external 0..1 risk value (e.g. how close a hidden timer is
-## to firing). The pulse gets faster and bigger as t rises, so the one
-## button in the game visibly demands more urgency right as the danger
-## does - the player doesn't have to look elsewhere (a meter, a color) and
-## infer they should act; the thing they need to tap is telling them itself.
-func set_urgency(t: float) -> void:
-	if not _enabled or not _shown:
-		t = 0.0
-	var bucket: int = clampi(int(t * URGENCY_BUCKETS), 0, URGENCY_BUCKETS - 1)
-	if bucket == _urgency_bucket:
-		return
-	_urgency_bucket = bucket
-	_stop_urgency_pulse()
-
-	if bucket == 0 or _is_pressed:
-		return
-
-	var frac: float = float(bucket) / float(URGENCY_BUCKETS - 1)
-	var period: float = lerpf(0.45, 0.12, frac)
-	var pulse_scale: float = lerpf(1.06, 1.24, frac)
-
-	_urgency_tween = create_tween()
-	_urgency_tween.set_loops()
-	_urgency_tween.tween_property(self, "scale", Vector2(pulse_scale, pulse_scale), period).set_trans(Tween.TRANS_SINE)
-	_urgency_tween.tween_property(self, "scale", Vector2(_resting_scale, _resting_scale), period).set_trans(Tween.TRANS_SINE)
-
-
-func _stop_urgency_pulse() -> void:
-	if _urgency_tween:
-		_urgency_tween.kill()
-		_urgency_tween = null
-	if not _is_pressed:
-		scale = Vector2(_resting_scale, _resting_scale)
 
 
 func punch_scale() -> void:

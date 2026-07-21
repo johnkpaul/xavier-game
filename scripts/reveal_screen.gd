@@ -1,18 +1,19 @@
 extends CanvasLayer
 class_name RevealScreen
 
-## Full-screen celebration shown whenever Xavier either sets a new bravery
-## record (held out longer than ever before and still escaped) or banks his
-## way past another milestone of total points (see GameManager.MILESTONE_STEP).
-## Purely a fun pause between rounds - no unlockable content is gated
-## behind it in this first pass, easy to add later.
+## Full-screen celebration shown whenever Xavier either sets a new best
+## crossing streak (most times in a row he's made it across without being
+## caught) or banks his way past another milestone of total points (see
+## GameManager.MILESTONE_STEP). Purely a fun pause between rounds - no
+## unlockable content is gated behind it in this first pass, easy to add
+## later.
 
 signal reveal_complete
 
 const RECORD_MESSAGES := [
 	"THAT WAS SO BRAVE!",
-	"YOU HELD OUT LONGER THAN EVER!",
-	"THE MOUTH ALMOST GOT YOU!",
+	"YOU'VE NEVER MADE IT ACROSS THIS MANY TIMES!",
+	"THE MOUTH CAN'T KEEP UP WITH YOU!",
 	"XAVIER THE BRAVEST!",
 ]
 
@@ -48,10 +49,10 @@ func _ready() -> void:
 	tap_hint.modulate.a = 0.0
 
 
-func play(points: int, is_new_best: bool, milestone: int) -> void:
+func play(streak: int, is_new_best: bool, milestone: int) -> void:
 	if is_new_best:
-		headline.text = "NEW BRAVERY RECORD: %d!" % points
-		subline.text = RECORD_MESSAGES[GameManager.best_round % RECORD_MESSAGES.size()]
+		headline.text = "NEW BEST STREAK: %d IN A ROW!" % streak
+		subline.text = RECORD_MESSAGES[GameManager.best_streak % RECORD_MESSAGES.size()]
 	else:
 		var total: int = milestone * GameManager.MILESTONE_STEP
 		headline.text = "%d POINTS BANKED!" % total

@@ -36,7 +36,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 0.8)
 autowrap_mode = 3
 horizontal_alignment = 1
 vertical_alignment = 1
-text = "HOLD OUT AS LONG AS YOU DARE, THEN TAP RUN TO ESCAPE!"
+text = "WATCH THE MOUTH, THEN TAP RUN TO DASH ACROSS!"
 
 [node name="TapHint" type="Label" parent="TitleScreen"]
 offset_left = 260.0
