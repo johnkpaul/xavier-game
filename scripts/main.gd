@@ -26,6 +26,13 @@ func _ready() -> void:
 	_ensure_generated_assets()
 	version_label.text = "v" + GameManager.BUILD_VERSION
 
+	# The title screen's labels are authored with absolute offsets against
+	# the 1920x1080 design space, so they need re-centring on the wider
+	# logical viewport a phone in landscape produces. VersionTag is
+	# deliberately excluded - it is genuinely corner-anchored in the scene
+	# and a shift would pull it inward, away from the corner.
+	ViewportFit.apply_layer(title_screen, $TitleScreen/Background)
+
 	game = GAME_SCENE.instantiate()
 	game_container.add_child(game)
 	game.celebration.connect(_on_celebration)
@@ -36,11 +43,17 @@ func _ready() -> void:
 	_title_ready = true
 
 
+## Must use ResourceLoader rather than FileAccess. In an exported build the
+## source .png files are not shipped - they're converted to imported .ctex
+## resources - so FileAccess.file_exists() reports false for every one of
+## them and the game silently regenerates its entire art set on every single
+## launch, on a device, before the title screen appears. ResourceLoader
+## understands the import remaps and answers correctly in both cases.
 func _ensure_generated_assets() -> void:
 	var probe_path := "res://generated_assets/background.png"
-	if not FileAccess.file_exists(probe_path):
-		# Editor-convenience fallback only: an exported HTML5 build ships
-		# with generated_assets/ already baked in by build.sh.
+	if not ResourceLoader.exists(probe_path):
+		# Editor-convenience fallback only: an exported build ships with
+		# generated_assets/ already baked in by build.sh.
 		ProceduralArt.run_all()
 
 
@@ -64,4 +77,7 @@ func _on_celebration(streak: int, is_new_best: bool, milestone: int) -> void:
 	if not reveal:
 		reveal = REVEAL_SCENE.instantiate()
 		add_child(reveal)
+		# The toast is authored at absolute offsets, so it would otherwise
+		# sit left of centre on a phone in landscape.
+		ViewportFit.apply_layer(reveal)
 	reveal.play(streak, is_new_best, milestone)

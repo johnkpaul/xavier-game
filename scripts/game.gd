@@ -76,6 +76,7 @@ const CHEER_FLASH := Color8(0xFF, 0xE0, 0x7A)
 @onready var tutorial_label: Label = $HUD/TutorialLabel
 @onready var run_button: TouchButton = $Controls/RunButton
 @onready var hint_arrow: TextureRect = $Controls/HintArrow
+@onready var background_sprite: Sprite2D = $Background
 
 var _cycle_time := 0.0
 var _cycle_duration := CYCLE_DURATION
@@ -96,6 +97,15 @@ var _flee_bob_tween: Tween
 
 func _ready() -> void:
 	_rng.randomize()
+
+	# The trap, Xavier and the two waiting spots are all at absolute world
+	# coordinates against a 1920-wide design space, and the backdrop is a
+	# 1920x1080 sprite. On a phone in landscape the logical viewport is
+	# wider than that, so without this the whole scene sits left of centre
+	# with bare clear-colour down the right hand edge. The HUD and Controls
+	# layers are properly anchored and are deliberately left alone.
+	ViewportFit.apply_world(self, background_sprite)
+
 	_trap_home_pos = trap_sprite.position
 	_xavier_home_y = xavier_sprite.position.y
 	_xavier_home_scale = xavier_sprite.scale
