@@ -85,6 +85,24 @@ through several mechanic pivots, an AI art integration, and real-device bug fixe
   project was really a search for "what's the one-sentence rule a kid can hold in
   their head" — and each simplification made the game better, never worse.
 
+## Reusing a scaffold forks the bugs too
+
+The stuck-RUN-button fix in 23ca2b9 — the nastiest bug this project hit —
+never made it back to `chip-game`, which had copied `touch_button.gd` from
+the same shared scaffold. That game shipped with the identical bug for two
+weeks: a button that permanently stopped responding whenever a finger lifted
+a few pixels outside it, silently, with no error.
+
+Nothing links the copies, so nothing catches this automatically. The cheap
+standing habit is to **diff the shared scaffold files across every sibling
+repo whenever picking a project back up** — `touch_button.gd`,
+`procedural_audio.gd`, `viewport_fit.gd`, `procedural_font.gd`, and
+`main.gd`'s generated-asset probe. Two of the bugs found in the August 2026
+pass would have surfaced in thirty seconds that way.
+
+Corollary: when a fix lands in a scaffold file, it isn't finished until the
+siblings have it.
+
 ## The scaling contract (added in the 2026-08-03 polish pass)
 
 - **`stretch/mode = "viewport"` was costing legibility for free.** It renders
