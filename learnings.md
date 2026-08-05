@@ -121,3 +121,28 @@ correctly in both the editor and an export.
 This is the third distinct incarnation of this bug in the series. The failure
 mode is always the same and always invisible: nothing errors, the game just
 does a pile of pointless work at startup.
+
+## Convert design units to device pixels before choosing any size
+
+The design space is 1080 tall and an iPhone in landscape is ~390 CSS pixels
+tall, so the scale factor is about **0.36**. The title screen's prologue —
+"WATCH THE MOUTH, THEN TAP RUN TO DASH ACROSS!", which is the entire rule of
+the game — was set at 36, i.e. **13 CSS pixels**. Anything carrying meaning
+wants 44+; below ~14 CSS px is decoration, not text. This one calculation
+predicts most "it's too small" complaints.
+
+## Portrait is not a hypothetical
+
+`display/window/handheld/orientation = "landscape"` binds a *native* app via
+its manifest. A browser ignores it completely, and Godot's web export can't
+lock orientation outside fullscreen — so a kid handed a phone in portrait
+gets the real thing. With `expand`, portrait grows the logical viewport
+*vertically* (measured: 1920x3840), so everything renders at roughly a
+quarter size. Nothing errors and nothing clips; it's silently unreadable
+with no hint that turning the phone would fix it.
+
+A "turn your phone sideways" overlay is the honest fix. Two things to get
+right: size it from the viewport rather than in design-space constants (or
+it comes out microscopic too — the exact problem it exists to explain), and
+test that it *hides* again on rotating back. An overlay stuck over a
+perfectly playable game is much worse than the problem it was solving.

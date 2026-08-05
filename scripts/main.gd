@@ -33,6 +33,10 @@ func _ready() -> void:
 	# and a shift would pull it inward, away from the corner.
 	ViewportFit.apply_layer(title_screen, $TitleScreen/Background)
 
+	# Held in portrait the whole game renders at about a quarter size with
+	# no explanation, so say so rather than letting a kid squint at it.
+	add_child(RotatePrompt.new())
+
 	game = GAME_SCENE.instantiate()
 	game_container.add_child(game)
 	game.celebration.connect(_on_celebration)
