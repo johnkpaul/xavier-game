@@ -24,6 +24,12 @@ var _title_ready := false
 
 func _ready() -> void:
 	_ensure_generated_assets()
+
+	# Swaps every label in the game off Godot's built-in smooth sans and
+	# onto a pixel font that matches the artwork. Applied at the tree root
+	# so no scene file needs to know about it.
+	ProceduralFont.install(get_tree())
+
 	version_label.text = "v" + GameManager.BUILD_VERSION
 
 	# The title screen's labels are authored with absolute offsets against

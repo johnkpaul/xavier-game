@@ -146,3 +146,39 @@ right: size it from the viewport rather than in design-space constants (or
 it comes out microscopic too — the exact problem it exists to explain), and
 test that it *hides* again on rotating back. An overlay stuck over a
 perfectly playable game is much worse than the problem it was solving.
+
+
+## Typography was the single biggest perceived-quality gap
+
+Every label rendered in Godot's built-in fallback, **Open Sans SemiBold** - a
+smooth corporate sans - on top of deliberately blocky pixel art. Nothing was
+broken, so it never surfaced as a bug; it just made the game read as a
+prototype, because the words and the world looked like they came from
+different products. There was no `Theme` anywhere either, just ad-hoc
+`theme_override_*` lines scattered through the scenes.
+
+A 5x7 pixel font generated in code fixed it with no asset and no licensing.
+The traps, all of which cost real time:
+
+- **`fixed_size_scale_mode` must be set before the first cache entry
+  exists**, or the font silently ignores `font_size` and renders everything
+  at 7 pixels, with no error.
+- **`root.theme`, `theme.set_font(name, type, font)` and
+  `ThemeDB.fallback_font` all fail to reach a Label that lives under a
+  `CanvasLayer`** - theme lookup walks the *Control* parent chain and a
+  CanvasLayer isn't a Control. Only a per-node `add_theme_font_override`
+  works. Verified all four in a test scene rather than guessing.
+- **Bitmap fonts have no natural leading**, so wrapped lines collide until
+  blank rows are baked into the descent.
+- **A pixel font is visually bigger than Open Sans at the same nominal
+  size.** The tutorial line - the one piece of text that teaches the game -
+  started wrapping and collided with the streak counter above it.
+  Re-screenshot every screen after a font swap; don't assume layouts hold.
+
+## Text over artwork needs a plate
+
+The streak counter and the tutorial line both sit directly on the trap,
+which is a busy high-contrast creature, and light text on it was hard to
+read. `Label` supports a `normal` StyleBox, so the dark plate can be part of
+the label itself rather than a separate node whose size and position would
+have to be kept in sync.

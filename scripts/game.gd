@@ -106,6 +106,14 @@ func _ready() -> void:
 	# layers are properly anchored and are deliberately left alone.
 	ViewportFit.apply_world(self, background_sprite)
 
+	# The streak counter and the tutorial line both sit directly on top of
+	# the trap, which is a busy, high-contrast creature. Light text straight
+	# onto it was hard to pick out - and the tutorial line is the one piece
+	# of text that actually teaches the game. A dark plate behind them costs
+	# nothing and makes both readable regardless of what the mouth is doing.
+	_add_text_backing(streak_label)
+	_add_text_backing(tutorial_label)
+
 	_trap_home_pos = trap_sprite.position
 	_xavier_home_y = xavier_sprite.position.y
 	_xavier_home_scale = xavier_sprite.scale
@@ -116,6 +124,20 @@ func _ready() -> void:
 	GameManager.total_changed.connect(func(t: int): total_label.text = "Total: %d" % t)
 
 	start_new_round()
+
+
+## Godot's Label supports a "normal" StyleBox, so the plate can be part of
+## the label itself rather than a separate node that would have to be kept
+## in sync with its size and position.
+func _add_text_backing(label: Label) -> void:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.06, 0.06, 0.08, 0.55)
+	sb.set_corner_radius_all(0)
+	sb.content_margin_left = 20.0
+	sb.content_margin_right = 20.0
+	sb.content_margin_top = 6.0
+	sb.content_margin_bottom = 6.0
+	label.add_theme_stylebox_override("normal", sb)
 
 
 func start_new_round() -> void:
